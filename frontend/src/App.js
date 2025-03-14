@@ -6,6 +6,7 @@ import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Team from './pages/Team';
 
 // Import auth components
 import { AuthProvider } from './auth/AuthContext';
@@ -77,6 +78,7 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
+            <Route path="/team" element={<Team />} />
             <Route path="/login" element={<Login />} />
             
             {/* Protected routes */}
