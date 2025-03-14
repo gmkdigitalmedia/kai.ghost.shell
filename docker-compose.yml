@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kai-ghost-shell-backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - SLACK_TOKEN=${SLACK_TOKEN}
+      - NOTION_TOKEN=${NOTION_TOKEN}
+      - NOTION_DATABASE_ID=${NOTION_DATABASE_ID}
+      - GOOGLE_TOKEN=${GOOGLE_TOKEN}
+      - GOOGLE_REFRESH_TOKEN=${GOOGLE_REFRESH_TOKEN}
+    restart: always
+    networks:
+      - kai-ghost-shell-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kai-ghost-shell-frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - kai-ghost-shell-network
+
+networks:
+  kai-ghost-shell-network:
+    driver: bridge 
