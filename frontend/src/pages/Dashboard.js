@@ -1,43 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Button,
   Container,
   Typography,
   Paper,
   Grid,
   TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
+  Button,
   CircularProgress,
   Alert,
+  Card,
+  CardContent,
+  Divider
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PersonIcon from '@mui/icons-material/Person';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import axios from 'axios';
 
+import { useAuth } from '../auth/AuthContext';
+import DashboardHeader from '../components/DashboardHeader';
+import Sidebar from '../components/Sidebar';
+import WorkflowCard from '../components/WorkflowCard';
+
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { currentUser } = useAuth();
+  
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [patientId, setPatientId] = useState('');
   const [loading, setLoading] = useState(false);
   const [triggering, setTriggering] = useState(false);
@@ -48,19 +37,19 @@ const Dashboard = () => {
 
   // Check authentication
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-    if (!isAuthenticated) {
+    if (!currentUser) {
       navigate('/login');
     }
-  }, [navigate]);
+  }, [currentUser, navigate]);
 
   // Fetch workflow statuses
   useEffect(() => {
     const fetchWorkflowStatuses = async () => {
       setLoading(true);
       try {
-        // In a real implementation, this would call the backend API
+        // In a real implementation, this would call the backend API with proper auth
         // For demo purposes, we'll simulate a delay and use mock data
+        // const response = await axios.get('/api/workflow/status');
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Mock API response
@@ -89,14 +78,10 @@ const Dashboard = () => {
       }
     };
 
-    fetchWorkflowStatuses();
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
+    if (currentUser) {
+      fetchWorkflowStatuses();
+    }
+  }, [currentUser]);
 
   const handleTriggerWorkflow = async () => {
     if (!patientId) {
@@ -112,7 +97,7 @@ const Dashboard = () => {
     try {
       // First, get the pathology report
       // In a real implementation, this would call the backend API
-      // For demo purposes, we'll simulate a delay and use mock data
+      // const reportResponse = await axios.get(`/api/pathology/report/${patientId}`);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Mock pathology report
@@ -141,6 +126,7 @@ const Dashboard = () => {
       setReport(reportResponse.data);
       
       // Then, trigger the workflow
+      // const workflowResponse = await axios.post('/api/workflow/trigger', { patient_id: patientId });
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Mock workflow trigger response
@@ -170,103 +156,40 @@ const Dashboard = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'failed':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
   const formatTimestamp = (timestamp) => {
     return new Date(timestamp).toLocaleString();
   };
 
-  const drawer = (
-    <Box sx={{ width: 250 }}>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="h6" component="div">
-          KAI.ghost.shell
-        </Typography>
-      </Box>
-      <Divider />
-      <List>
-        <ListItem button selected>
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dashboard" />
-        </ListItem>
-        <ListItem button>
-          <ListItemIcon>
-            <PersonIcon />
-          </ListItemIcon>
-          <ListItemText primary="Patients" />
-        </ListItem>
-        <ListItem button>
-          <ListItemIcon>
-            <NotificationsIcon />
-          </ListItemIcon>
-          <ListItemText primary="Notifications" />
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        <ListItem button onClick={handleLogout}>
-          <ListItemIcon>
-            <ExitToAppIcon />
-          </ListItemIcon>
-          <ListItemText primary="Logout" />
-        </ListItem>
-      </List>
-    </Box>
-  );
-
   return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed">
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={() => setDrawerOpen(true)}
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Pathology Workflow Dashboard
-          </Typography>
-          <Button color="inherit" onClick={handleLogout}>
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <DashboardHeader 
+        title="Pathology Workflow Dashboard" 
+        onMenuOpen={() => setSidebarOpen(true)} 
+      />
       
-      <Drawer
-        anchor="left"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      >
-        {drawer}
-      </Drawer>
+      <Sidebar 
+        open={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)} 
+      />
       
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: '100%',
-          mt: 8,
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          p: 3, 
+          bgcolor: 'background.default' 
         }}
       >
         <Container maxWidth="lg">
+          {currentUser && currentUser.org_id && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h5" gutterBottom>
+                Welcome to {currentUser.org_id}
+              </Typography>
+              <Divider />
+            </Box>
+          )}
+          
           {/* Trigger Workflow Section */}
           <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
             <Typography variant="h5" component="h2" gutterBottom>
@@ -306,7 +229,7 @@ const Dashboard = () => {
                   disabled={triggering || !patientId}
                   sx={{ height: '56px' }}
                 >
-                  {triggering ? 'Triggering...' : 'Trigger Workflow'}
+                  {triggering ? <CircularProgress size={24} color="inherit" /> : 'Trigger Workflow'}
                 </Button>
               </Grid>
             </Grid>
@@ -327,33 +250,49 @@ const Dashboard = () => {
                   <Typography variant="subtitle1">Hospital: {report.hospital}</Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle1">
-                    Status: <Chip label={report.status} color="error" />
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Severity: <Chip label={report.severity} color="error" />
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Follow-up Required: <Chip label={report.follow_up_required ? 'Yes' : 'No'} color={report.follow_up_required ? 'warning' : 'success'} />
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ mr: 1 }}>Status:</Typography>
+                    <Alert severity="error" icon={false} sx={{ py: 0 }}>
+                      {report.status}
+                    </Alert>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ mr: 1 }}>Severity:</Typography>
+                    <Alert severity="error" icon={false} sx={{ py: 0 }}>
+                      {report.severity}
+                    </Alert>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ mr: 1 }}>Follow-up Required:</Typography>
+                    <Alert 
+                      severity={report.follow_up_required ? "warning" : "success"} 
+                      icon={false} 
+                      sx={{ py: 0 }}
+                    >
+                      {report.follow_up_required ? 'Yes' : 'No'}
+                    </Alert>
+                  </Box>
                   <Typography variant="subtitle1">Date: {formatTimestamp(report.timestamp)}</Typography>
                 </Grid>
                 <Grid item xs={12}>
+                  <Divider sx={{ my: 2 }} />
                   <Typography variant="subtitle1">Findings:</Typography>
-                  <Typography variant="body2" paragraph>
+                  <Typography variant="body2" paragraph sx={{ ml: 2 }}>
                     {report.findings.description}
                   </Typography>
                   <Typography variant="subtitle2">Details:</Typography>
-                  <Typography variant="body2">Cell Abnormality: {report.findings.details.cell_abnormality}</Typography>
-                  <Typography variant="body2">Tissue Damage: {report.findings.details.tissue_damage}</Typography>
-                  <Typography variant="body2">Tumor Markers: {report.findings.details.tumor_markers}</Typography>
+                  <Box sx={{ ml: 2 }}>
+                    <Typography variant="body2">Cell Abnormality: {report.findings.details.cell_abnormality}</Typography>
+                    <Typography variant="body2">Tissue Damage: {report.findings.details.tissue_damage}</Typography>
+                    <Typography variant="body2">Tumor Markers: {report.findings.details.tumor_markers}</Typography>
+                  </Box>
                 </Grid>
               </Grid>
             </Paper>
           )}
           
           {/* Workflow Status Section */}
-          <Paper elevation={3} sx={{ p: 3 }}>
+          <Box sx={{ mb: 4 }}>
             <Typography variant="h5" component="h2" gutterBottom>
               Workflow Status
             </Typography>
@@ -362,56 +301,20 @@ const Dashboard = () => {
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                 <CircularProgress />
               </Box>
+            ) : workflowStatuses.length > 0 ? (
+              workflowStatuses.map((workflow, index) => (
+                <WorkflowCard key={index} workflow={workflow} />
+              ))
             ) : (
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Patient ID</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Slack</TableCell>
-                      <TableCell>Notion</TableCell>
-                      <TableCell>Appointment</TableCell>
-                      <TableCell>Email</TableCell>
-                      <TableCell>Timestamp</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {workflowStatuses.length > 0 ? (
-                      workflowStatuses.map((workflow, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{workflow.patient_id}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={workflow.status}
-                              color={getStatusColor(workflow.status)}
-                              size="small"
-                            />
-                          </TableCell>
-                          {workflow.steps.map((step, stepIndex) => (
-                            <TableCell key={stepIndex}>
-                              <Chip
-                                label={step.status}
-                                color={getStatusColor(step.status)}
-                                size="small"
-                              />
-                            </TableCell>
-                          ))}
-                          <TableCell>{formatTimestamp(workflow.timestamp)}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center">
-                          No workflow data available
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="body1" align="center" color="text.secondary">
+                    No workflow data available
+                  </Typography>
+                </CardContent>
+              </Card>
             )}
-          </Paper>
+          </Box>
         </Container>
       </Box>
     </Box>
